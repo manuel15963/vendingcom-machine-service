@@ -1,0 +1,42 @@
+server:
+  port: ${PORT:8084}
+
+spring:
+  application:
+    name: vendingcom-machine-service
+
+  # Perfil activo: 'local' por defecto. En la nube se pone SPRING_PROFILES_ACTIVE=prod
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+  sql:
+    init:
+      mode: never
+
+management:
+  health:
+    r2dbc:
+      enabled: true
+
+machine:
+  audit-log:
+    # Días de retención de la auditoría; un job semanal borra lo más antiguo.
+    retention-days: ${AUDIT_LOG_RETENTION_DAYS:30}
+
+# Intercomunicación: al crear una máquina se valida el cliente Y la ubicación.
+# Local por defecto; en la nube se pasan CUSTOMER_SERVICE_URL y LOCATION_SERVICE_URL.
+customer-service:
+  base-url: ${CUSTOMER_SERVICE_URL:http://localhost:8082}
+location-service:
+  base-url: ${LOCATION_SERVICE_URL:http://localhost:8083}
+
+springdoc:
+  # En producción se puede desactivar la documentación con SPRINGDOC_ENABLED=false
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:true}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:true}
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
