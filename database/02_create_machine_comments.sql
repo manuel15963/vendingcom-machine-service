@@ -7,9 +7,9 @@
 -- ------------------------------------------------------------
 -- machine_parameters
 -- ------------------------------------------------------------
-COMMENT ON TABLE  machine_parameters                  IS 'Catálogo de estados y tipos del módulo de máquinas (MACHINE_STATUS, EVENT_TYPE, DOCUMENT_TYPE).';
+COMMENT ON TABLE  machine_parameters                  IS 'Catálogo de estados y tipos del módulo de máquinas (MACHINE_STATUS, MACHINE_TYPE, EVENT_TYPE, DOCUMENT_TYPE).';
 COMMENT ON COLUMN machine_parameters.parameter_id     IS 'Identificador único del parámetro (clave primaria).';
-COMMENT ON COLUMN machine_parameters.parameter_group  IS 'Grupo al que pertenece el parámetro. Ej: MACHINE_STATUS, EVENT_TYPE, DOCUMENT_TYPE.';
+COMMENT ON COLUMN machine_parameters.parameter_group  IS 'Grupo al que pertenece el parámetro. Ej: MACHINE_STATUS, MACHINE_TYPE, EVENT_TYPE, DOCUMENT_TYPE.';
 COMMENT ON COLUMN machine_parameters.parameter_code   IS 'Código técnico del parámetro dentro del grupo. Ej: ACTIVE, INSTALLATION, MANUAL.';
 COMMENT ON COLUMN machine_parameters.parameter_value  IS 'Valor o etiqueta legible del parámetro (Activa, Instalación...).';
 COMMENT ON COLUMN machine_parameters.description      IS 'Descripción legible de para qué sirve el parámetro.';
@@ -33,7 +33,8 @@ COMMENT ON COLUMN machines.serial_number         IS 'Número de serie de fábric
 COMMENT ON COLUMN machines.machine_status_id     IS 'Estado actual de la máquina. FK a machine_parameters (grupo MACHINE_STATUS).';
 COMMENT ON COLUMN machines.installation_date     IS 'Fecha de instalación de la máquina.';
 COMMENT ON COLUMN machines.last_maintenance_date IS 'Fecha del último mantenimiento.';
-COMMENT ON COLUMN machines.configuration         IS 'Configuración técnica en JSON (capacidad, monedas aceptadas, nº de slots, etc.).';
+COMMENT ON COLUMN machines.machine_type_id           IS 'Tipo/categoría de la máquina (hardware). FK a machine_parameters (grupo MACHINE_TYPE). Opcional.';
+COMMENT ON COLUMN machines.maintenance_interval_days IS 'Cada cuántos días requiere mantenimiento preventivo. Con la última fecha el sistema calcula y avisa el próximo. Opcional.';
 COMMENT ON COLUMN machines.notes                 IS 'Observaciones adicionales.';
 COMMENT ON COLUMN machines.version               IS 'Bloqueo optimista para evitar sobrescrituras concurrentes.';
 COMMENT ON COLUMN machines.created_by_user_id    IS 'ID del usuario de auth-service que registró la máquina (no es FK).';

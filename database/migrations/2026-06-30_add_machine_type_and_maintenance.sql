@@ -40,6 +40,12 @@ INSERT INTO machine_parameters (parameter_group, parameter_code, parameter_value
 ('MACHINE_TYPE','OTHER','Otra','Otro tipo de máquina.',5,1)
 ON CONFLICT (parameter_group, parameter_code) DO NOTHING;
 
+-- 3b) Diccionario de datos (comentarios; cosmético, no afecta el funcionamiento)
+COMMENT ON COLUMN machines.machine_type_id           IS 'Tipo/categoría de la máquina (hardware). FK a machine_parameters (grupo MACHINE_TYPE). Opcional.';
+COMMENT ON COLUMN machines.maintenance_interval_days IS 'Cada cuántos días requiere mantenimiento preventivo. Con la última fecha el sistema calcula y avisa el próximo. Opcional.';
+COMMENT ON TABLE  machine_parameters                 IS 'Catálogo de estados y tipos del módulo de máquinas (MACHINE_STATUS, MACHINE_TYPE, EVENT_TYPE, DOCUMENT_TYPE).';
+COMMENT ON COLUMN machine_parameters.parameter_group IS 'Grupo al que pertenece el parámetro. Ej: MACHINE_STATUS, MACHINE_TYPE, EVENT_TYPE, DOCUMENT_TYPE.';
+
 -- 4) Limpieza: eliminar la columna libre antigua -------------
 --    ⚠️ Correr SOLO después de que el backend nuevo esté desplegado.
 -- ALTER TABLE machines DROP COLUMN IF EXISTS configuration;

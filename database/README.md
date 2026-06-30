@@ -24,8 +24,8 @@ y luego `99_...` para verificar. Todos son idempotentes (se pueden re-ejecutar s
 - **Local (psql):** `for f in 0*.sql; do psql -d vendingcom_db -f "$f"; done`
 
 ## 5 tablas
-- **machine_parameters** — catálogo (MACHINE_STATUS, EVENT_TYPE, DOCUMENT_TYPE).
-- **machines** — máquina (code autogenerado `VEND-000001`, qr_code, estado, configuración JSONB, `version` para bloqueo optimista).
+- **machine_parameters** — catálogo (MACHINE_STATUS, MACHINE_TYPE, EVENT_TYPE, DOCUMENT_TYPE).
+- **machines** — máquina (code autogenerado `VEND-000001`, qr_code, estado, tipo, mantenimiento preventivo, `version` para bloqueo optimista).
 - **machine_events** — eventos (instalación, mantenimiento, reparación…).
 - **machine_documents** — documentos (archivo en S3/MinIO; aquí solo la URL).
 - **machine_audit_logs** — auditoría append-only (old/new JSONB).
