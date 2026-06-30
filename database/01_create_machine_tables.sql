@@ -44,7 +44,8 @@ CREATE TABLE IF NOT EXISTS machines (
     machine_status_id     INTEGER      NOT NULL,   -- FK -> machine_parameters (MACHINE_STATUS)
     installation_date     DATE,
     last_maintenance_date DATE,
-    configuration         JSONB,                   -- capacidad, monedas, nº de slots, etc.
+    machine_type_id       INTEGER,                     -- FK -> machine_parameters (MACHINE_TYPE); opcional
+    maintenance_interval_days INTEGER,                 -- cada cuántos días requiere mantenimiento preventivo
     notes                 TEXT,
     version               INTEGER      NOT NULL DEFAULT 0,  -- bloqueo optimista (lo maneja la app)
     created_by_user_id    INTEGER,                 -- usuario de auth-service (no FK)
@@ -54,7 +55,9 @@ CREATE TABLE IF NOT EXISTS machines (
     CONSTRAINT uq_machines_code    UNIQUE (code),
     CONSTRAINT uq_machines_qr_code UNIQUE (qr_code),
     CONSTRAINT uq_machines_serial  UNIQUE (serial_number),
-    CONSTRAINT fk_machines_status  FOREIGN KEY (machine_status_id) REFERENCES machine_parameters(parameter_id)
+    CONSTRAINT chk_machines_maint_interval CHECK (maintenance_interval_days IS NULL OR maintenance_interval_days > 0),
+    CONSTRAINT fk_machines_status  FOREIGN KEY (machine_status_id) REFERENCES machine_parameters(parameter_id),
+    CONSTRAINT fk_machines_type    FOREIGN KEY (machine_type_id)   REFERENCES machine_parameters(parameter_id)
 );
 
 -- ------------------------------------------------------------

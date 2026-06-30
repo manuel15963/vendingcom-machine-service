@@ -19,12 +19,15 @@ public class MachinePersistenceAdapter implements MachineRepositoryPort {
     // Lectura con JOIN al catálogo para traer la etiqueta legible del estado (parameter_value).
     private static final String SELECT_WITH_LABELS = """
             SELECT m.machine_id, m.code, m.qr_code, m.customer_id, m.location_id, m.model, m.brand,
-                   m.serial_number, m.machine_status_id, m.installation_date, m.last_maintenance_date,
-                   m.configuration::text AS configuration, m.notes, m.version,
+                   m.serial_number, m.machine_status_id, m.machine_type_id,
+                   m.installation_date, m.last_maintenance_date, m.maintenance_interval_days,
+                   m.notes, m.version,
                    m.created_by_user_id, m.updated_by_user_id, m.created_at, m.updated_at,
-                   s.parameter_value AS machine_status_name
+                   s.parameter_value AS machine_status_name,
+                   t.parameter_value AS machine_type_name
             FROM machines m
             LEFT JOIN machine_parameters s ON s.parameter_id = m.machine_status_id
+            LEFT JOIN machine_parameters t ON t.parameter_id = m.machine_type_id
             """;
 
     private final DatabaseClient databaseClient;
@@ -39,12 +42,12 @@ public class MachinePersistenceAdapter implements MachineRepositoryPort {
         String sql = """
                 INSERT INTO machines (
                     code, qr_code, customer_id, location_id, model, brand, serial_number,
-                    machine_status_id, installation_date, last_maintenance_date,
-                    configuration, notes, version, created_by_user_id, updated_by_user_id
+                    machine_status_id, machine_type_id, installation_date, last_maintenance_date,
+                    maintenance_interval_days, notes, version, created_by_user_id, updated_by_user_id
                 ) VALUES (
                     :code, :qrCode, :customerId, :locationId, :model, :brand, :serialNumber,
-                    :machineStatusId, :installationDate, :lastMaintenanceDate,
-                    CAST(:configuration AS jsonb), :notes, 0, :createdByUserId, :updatedByUserId
+                    :machineStatusId, :machineTypeId, :installationDate, :lastMaintenanceDate,
+                    :maintenanceIntervalDays, :notes, 0, :createdByUserId, :updatedByUserId
                 )
                 RETURNING machine_id
                 """;
@@ -59,9 +62,10 @@ public class MachinePersistenceAdapter implements MachineRepositoryPort {
         spec = bindNullable(spec, "brand", machine.brand(), String.class);
         spec = bindNullable(spec, "serialNumber", machine.serialNumber(), String.class);
         spec = spec.bind("machineStatusId", machine.machineStatusId());
+        spec = bindNullable(spec, "machineTypeId", machine.machineTypeId(), Integer.class);
         spec = bindNullable(spec, "installationDate", machine.installationDate(), LocalDate.class);
         spec = bindNullable(spec, "lastMaintenanceDate", machine.lastMaintenanceDate(), LocalDate.class);
-        spec = bindNullable(spec, "configuration", machine.configuration(), String.class);
+        spec = bindNullable(spec, "maintenanceIntervalDays", machine.maintenanceIntervalDays(), Integer.class);
         spec = bindNullable(spec, "notes", machine.notes(), String.class);
         spec = bindNullable(spec, "createdByUserId", machine.createdByUserId(), Integer.class);
         spec = bindNullable(spec, "updatedByUserId", machine.updatedByUserId(), Integer.class);
@@ -84,9 +88,10 @@ public class MachinePersistenceAdapter implements MachineRepositoryPort {
                     brand = :brand,
                     serial_number = :serialNumber,
                     machine_status_id = :machineStatusId,
+                    machine_type_id = :machineTypeId,
                     installation_date = :installationDate,
                     last_maintenance_date = :lastMaintenanceDate,
-                    configuration = CAST(:configuration AS jsonb),
+                    maintenance_interval_days = :maintenanceIntervalDays,
                     notes = :notes,
                     version = version + 1,
                     updated_by_user_id = :updatedByUserId
@@ -101,9 +106,10 @@ public class MachinePersistenceAdapter implements MachineRepositoryPort {
         spec = bindNullable(spec, "brand", machine.brand(), String.class);
         spec = bindNullable(spec, "serialNumber", machine.serialNumber(), String.class);
         spec = spec.bind("machineStatusId", machine.machineStatusId());
+        spec = bindNullable(spec, "machineTypeId", machine.machineTypeId(), Integer.class);
         spec = bindNullable(spec, "installationDate", machine.installationDate(), LocalDate.class);
         spec = bindNullable(spec, "lastMaintenanceDate", machine.lastMaintenanceDate(), LocalDate.class);
-        spec = bindNullable(spec, "configuration", machine.configuration(), String.class);
+        spec = bindNullable(spec, "maintenanceIntervalDays", machine.maintenanceIntervalDays(), Integer.class);
         spec = bindNullable(spec, "notes", machine.notes(), String.class);
         spec = bindNullable(spec, "updatedByUserId", machine.updatedByUserId(), Integer.class);
         spec = spec.bind("machineId", machine.machineId());
@@ -200,16 +206,18 @@ public class MachinePersistenceAdapter implements MachineRepositoryPort {
                 row.get("brand", String.class),
                 row.get("serial_number", String.class),
                 row.get("machine_status_id", Integer.class),
+                row.get("machine_type_id", Integer.class),
                 row.get("installation_date", LocalDate.class),
                 row.get("last_maintenance_date", LocalDate.class),
-                row.get("configuration", String.class),
+                row.get("maintenance_interval_days", Integer.class),
                 row.get("notes", String.class),
                 row.get("version", Integer.class),
                 row.get("created_by_user_id", Integer.class),
                 row.get("updated_by_user_id", Integer.class),
                 row.get("created_at", LocalDateTime.class),
                 row.get("updated_at", LocalDateTime.class),
-                row.get("machine_status_name", String.class)
+                row.get("machine_status_name", String.class),
+                row.get("machine_type_name", String.class)
         );
     }
 }

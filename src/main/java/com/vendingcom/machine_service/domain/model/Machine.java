@@ -17,16 +17,18 @@ public record Machine(
         String brand,
         String serialNumber,
         Integer machineStatusId,
+        Integer machineTypeId,
         LocalDate installationDate,
         LocalDate lastMaintenanceDate,
-        String configuration,
+        Integer maintenanceIntervalDays,
         String notes,
         Integer version,
         Integer createdByUserId,
         Integer updatedByUserId,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        // Etiqueta legible resuelta desde el catálogo (solo lectura; null en escrituras).
-        String machineStatusName
+        // Etiquetas legibles resueltas desde el catálogo (solo lectura; null en escrituras).
+        String machineStatusName,
+        String machineTypeName
 ) {
 }

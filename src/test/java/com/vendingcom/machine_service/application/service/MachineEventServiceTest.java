@@ -47,7 +47,7 @@ class MachineEventServiceTest {
     private Machine machine(Integer statusId) {
         return new Machine(MACHINE_ID, "VEND-000001", "VEND-000001", 5, 7,
                 "Modelo X", "Marca Y", "SN-1", statusId, null, null,
-                null, null, 0, 1, 1, LocalDateTime.now(), null, "ACTIVE");
+                null, null, null, 0, 1, 1, LocalDateTime.now(), null, "ACTIVE", null);
     }
 
     private MachineEvent event(Integer id) {

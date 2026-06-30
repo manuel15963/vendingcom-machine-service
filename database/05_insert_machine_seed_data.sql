@@ -2,7 +2,7 @@
 -- VENDING.COM S.A.C — Módulo MACHINE
 -- Catálogos base (machine_parameters)
 -- Idempotente: ON CONFLICT DO NOTHING (se puede correr varias veces).
--- Grupos: MACHINE_STATUS (4) · EVENT_TYPE (6) · DOCUMENT_TYPE (5)
+-- Grupos: MACHINE_STATUS (4) · MACHINE_TYPE (5) · EVENT_TYPE (6) · DOCUMENT_TYPE (5)
 -- ============================================================
 
 INSERT INTO machine_parameters (parameter_group, parameter_code, parameter_value, description, sort_order, parameter_status) VALUES
@@ -10,6 +10,12 @@ INSERT INTO machine_parameters (parameter_group, parameter_code, parameter_value
 ('MACHINE_STATUS','INACTIVE','Inactiva','Máquina apagada o no operativa.',2,1),
 ('MACHINE_STATUS','MAINTENANCE','En mantenimiento','En mantenimiento programado.',3,1),
 ('MACHINE_STATUS','OUT_OF_SERVICE','Fuera de servicio','Fuera de servicio / baja temporal.',4,1),
+
+('MACHINE_TYPE','SNACKS','Snacks','Máquina de snacks / golosinas.',1,1),
+('MACHINE_TYPE','COLD_DRINKS','Bebidas frías','Máquina de bebidas frías (refrigerada).',2,1),
+('MACHINE_TYPE','COFFEE','Café','Máquina de café / bebidas calientes.',3,1),
+('MACHINE_TYPE','COMBO','Combinada','Snacks y bebidas en una sola máquina.',4,1),
+('MACHINE_TYPE','OTHER','Otra','Otro tipo de máquina.',5,1),
 
 ('EVENT_TYPE','INSTALLATION','Instalación','Instalación de la máquina.',1,1),
 ('EVENT_TYPE','MAINTENANCE','Mantenimiento','Mantenimiento realizado.',2,1),

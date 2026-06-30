@@ -1,6 +1,7 @@
 package com.vendingcom.machine_service.application.dto.request;
 
-import com.vendingcom.machine_service.util.validation.ValidJson;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -27,8 +28,11 @@ public record CreateMachineRequest(
 
         LocalDate lastMaintenanceDate,
 
-        @ValidJson(message = "La configuración debe ser un JSON válido")
-        String configuration,
+        Integer machineTypeId,
+
+        @Min(value = 1, message = "El intervalo de mantenimiento debe ser de al menos 1 día")
+        @Max(value = 3650, message = "El intervalo de mantenimiento no debe superar 3650 días")
+        Integer maintenanceIntervalDays,
 
         @Size(max = 2000, message = "Las notas no deben superar 2000 caracteres")
         String notes,

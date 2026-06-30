@@ -50,12 +50,12 @@ class MachineServiceTest {
     private Machine machine(Integer id, Integer statusId) {
         return new Machine(id, "VEND-000001", "VEND-000001", CUSTOMER_ID, LOCATION_ID,
                 "Modelo X", "Marca Y", "SN-1", statusId, null, null,
-                null, null, 0, 1, 1, LocalDateTime.now(), null, "ACTIVE");
+                null, null, null, 0, 1, 1, LocalDateTime.now(), null, "ACTIVE", null);
     }
 
     private CreateMachineRequest createRequest() {
         return new CreateMachineRequest(CUSTOMER_ID, LOCATION_ID, "Modelo X", "Marca Y",
-                "SN-1", null, null, null, null, null);
+                "SN-1", null, null, null, null, null, null);
     }
 
     @BeforeEach

@@ -29,6 +29,7 @@ import java.util.Optional;
 public class MachineService implements MachineUseCase {
 
     private static final String GROUP_MACHINE_STATUS = "MACHINE_STATUS";
+    private static final String GROUP_MACHINE_TYPE = "MACHINE_TYPE";
     private static final String STATUS_ACTIVE = "ACTIVE";
     private static final String STATUS_INACTIVE = "INACTIVE";
     private static final String TABLE_MACHINES = "machines";
@@ -63,6 +64,7 @@ public class MachineService implements MachineUseCase {
         // ubicación se abre la transacción que cubre resolveStatusId + create + auditoría.
         return validateCustomer(request.customerId())
                 .then(validateLocation(request.locationId()))
+                .then(validateMachineTypeIfPresent(request.machineTypeId()))
                 .then(persistNewMachine(request));
     }
 
@@ -86,14 +88,15 @@ public class MachineService implements MachineUseCase {
                                     normalize(request.brand()),
                                     normalize(request.serialNumber()),
                                     statusId,
+                                    request.machineTypeId(),
                                     request.installationDate(),
                                     request.lastMaintenanceDate(),
-                                    normalize(request.configuration()),
+                                    request.maintenanceIntervalDays(),
                                     normalize(request.notes()),
                                     null,                       // version: la BD lo inicializa en 0
                                     actor.orElse(null),
                                     null, null, null,
-                                    null
+                                    null, null
                             );
 
                             return machineRepositoryPort.create(toSave)
@@ -112,7 +115,8 @@ public class MachineService implements MachineUseCase {
     @Override
     @Transactional
     public Mono<Machine> update(Integer machineId, UpdateMachineRequest request) {
-        return machineRepositoryPort.findById(machineId)
+        return validateMachineTypeIfPresent(request.machineTypeId())
+                .then(machineRepositoryPort.findById(machineId)
                 .switchIfEmpty(notFound(machineId))
                 .flatMap(existing -> currentActorId()
                         .flatMap(actor -> {
@@ -126,16 +130,17 @@ public class MachineService implements MachineUseCase {
                                     normalize(request.brand()),
                                     normalize(request.serialNumber()),
                                     existing.machineStatusId(),
+                                    request.machineTypeId(),
                                     request.installationDate(),
                                     request.lastMaintenanceDate(),
-                                    normalize(request.configuration()),
+                                    request.maintenanceIntervalDays(),
                                     normalize(request.notes()),
                                     existing.version(),
                                     existing.createdByUserId(),
                                     actor.orElse(null),
                                     existing.createdAt(),
                                     null,   // updated_at lo fija el trigger; no se envía desde la app
-                                    null
+                                    null, null
                             );
 
                             return machineRepositoryPort.update(toUpdate)
@@ -147,7 +152,7 @@ public class MachineService implements MachineUseCase {
                                             AuditDataSerializer.serializeMachine(existing),
                                             AuditDataSerializer.serializeMachine(updated)
                                     ).thenReturn(updated));
-                        }));
+                        })));
     }
 
     @Override
@@ -211,16 +216,17 @@ public class MachineService implements MachineUseCase {
                                         existing.brand(),
                                         existing.serialNumber(),
                                         statusId,
+                                        existing.machineTypeId(),
                                         existing.installationDate(),
                                         existing.lastMaintenanceDate(),
-                                        existing.configuration(),
+                                        existing.maintenanceIntervalDays(),
                                         existing.notes(),
                                         existing.version(),
                                         existing.createdByUserId(),
                                         actor.orElse(null),
                                         existing.createdAt(),
                                         null,   // updated_at lo fija el trigger; no se envía desde la app
-                                        null
+                                        null, null
                                 );
 
                                 return machineRepositoryPort.update(toUpdate)
@@ -262,6 +268,20 @@ public class MachineService implements MachineUseCase {
                 .switchIfEmpty(Mono.error(new BusinessRuleException(
                         "INVALID_MACHINE_STATUS",
                         "El estado indicado no es válido.")))
+                .then();
+    }
+
+    /** Si se indica un tipo de máquina, debe existir y pertenecer al grupo MACHINE_TYPE. */
+    private Mono<Void> validateMachineTypeIfPresent(Integer machineTypeId) {
+        if (machineTypeId == null) {
+            return Mono.empty();
+        }
+        return machineParameterRepositoryPort.existsByIdAndGroup(machineTypeId, GROUP_MACHINE_TYPE)
+                .flatMap(exists -> Boolean.TRUE.equals(exists)
+                        ? Mono.<Boolean>empty()
+                        : Mono.<Boolean>error(new BusinessRuleException(
+                        "INVALID_MACHINE_TYPE",
+                        "El tipo de máquina indicado no es válido.")))
                 .then();
     }
 
