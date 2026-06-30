@@ -24,6 +24,9 @@ import reactor.test.StepVerifier;
 import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,6 +68,9 @@ class MachineEventServiceTest {
         when(machineRepositoryPort.findById(MACHINE_ID)).thenReturn(Mono.just(machine(ACTIVE_ID)));
         when(parameterRepositoryPort.findIdByGroupAndCode(G_STATUS, "ACTIVE")).thenReturn(Mono.just(ACTIVE_ID));
         when(parameterRepositoryPort.existsByIdAndGroup(EVENT_TYPE_ID, G_EVENT_TYPE)).thenReturn(Mono.just(true));
+        // Efecto automático: al registrar un evento de mantenimiento se actualiza last_maintenance_date.
+        when(parameterRepositoryPort.findCodeById(EVENT_TYPE_ID)).thenReturn(Mono.just("MAINTENANCE"));
+        when(machineRepositoryPort.updateLastMaintenanceDate(any(), any())).thenReturn(Mono.empty());
     }
 
     @Test
@@ -76,6 +82,31 @@ class MachineEventServiceTest {
         StepVerifier.create(service.create(MACHINE_ID, createRequest()))
                 .expectNextMatches(e -> e.eventId().equals(20) && "MAINTENANCE".equals(e.eventTypeName()))
                 .verifyComplete();
+    }
+
+    @Test
+    void create_eventoMantenimiento_actualizaUltimoMantenimiento() {
+        when(eventRepositoryPort.save(any())).thenReturn(Mono.just(event(20)));
+        when(auditLogRepositoryPort.save(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(service.create(MACHINE_ID, createRequest()))
+                .expectNextCount(1)
+                .verifyComplete();
+
+        verify(machineRepositoryPort).updateLastMaintenanceDate(eq(MACHINE_ID), any());
+    }
+
+    @Test
+    void create_eventoNoMantenimiento_noTocaLaFecha() {
+        when(parameterRepositoryPort.findCodeById(EVENT_TYPE_ID)).thenReturn(Mono.just("REPAIR"));
+        when(eventRepositoryPort.save(any())).thenReturn(Mono.just(event(21)));
+        when(auditLogRepositoryPort.save(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(service.create(MACHINE_ID, createRequest()))
+                .expectNextCount(1)
+                .verifyComplete();
+
+        verify(machineRepositoryPort, never()).updateLastMaintenanceDate(any(), any());
     }
 
     @Test

@@ -156,6 +156,15 @@ public class MachinePersistenceAdapter implements MachineRepositoryPort {
         return spec.map((row, metadata) -> row.get("total", Long.class)).one();
     }
 
+    @Override
+    public Mono<Void> updateLastMaintenanceDate(Integer machineId, LocalDate maintenanceDate) {
+        return databaseClient.sql("UPDATE machines SET last_maintenance_date = :date WHERE machine_id = :id")
+                .bind("date", maintenanceDate)
+                .bind("id", machineId)
+                .fetch().rowsUpdated()
+                .then();
+    }
+
     private void appendFilters(StringBuilder sql, String search, Integer customerId, Integer locationId, Integer statusId) {
         if (search != null) {
             sql.append(" AND (LOWER(COALESCE(m.code, '')) LIKE :search"
