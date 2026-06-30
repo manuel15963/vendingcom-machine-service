@@ -4,6 +4,8 @@ import com.vendingcom.machine_service.domain.model.Machine;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+
 public interface MachineRepositoryPort {
 
     /** Inserta la máquina (code y qr_code los completa el trigger de la BD). */
@@ -22,4 +24,7 @@ public interface MachineRepositoryPort {
 
     /** Total de resultados para los mismos filtros (para la paginación). */
     Mono<Long> countSearch(String search, Integer customerId, Integer locationId, Integer statusId);
+
+    /** Actualiza SOLO la fecha de último mantenimiento (efecto de registrar un evento de mantenimiento). */
+    Mono<Void> updateLastMaintenanceDate(Integer machineId, LocalDate maintenanceDate);
 }

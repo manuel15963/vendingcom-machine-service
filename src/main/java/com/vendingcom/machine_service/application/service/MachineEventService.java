@@ -27,6 +27,7 @@ public class MachineEventService implements MachineEventUseCase {
 
     private static final String GROUP_MACHINE_STATUS = "MACHINE_STATUS";
     private static final String GROUP_EVENT_TYPE = "EVENT_TYPE";
+    private static final String EVENT_MAINTENANCE = "MAINTENANCE";
     private static final String STATUS_ACTIVE = "ACTIVE";
     private static final String TABLE_EVENTS = "machine_events";
 
@@ -71,7 +72,9 @@ public class MachineEventService implements MachineEventUseCase {
                                     "EVENT_ADDED", machineId, saved.eventId(), actor.orElse(null),
                                     "Evento agregado: " + saved.title(),
                                     null, AuditDataSerializer.serialize(saved)
-                            ).thenReturn(saved));
+                            ).thenReturn(saved))
+                            .flatMap(saved -> applyMaintenanceSideEffect(machineId, request.eventTypeId(), saved)
+                                    .thenReturn(saved));
                 });
     }
 
@@ -105,6 +108,18 @@ public class MachineEventService implements MachineEventUseCase {
                         : Mono.error(new BusinessRuleException(
                         "INVALID_EVENT_TYPE",
                         "El tipo de evento indicado no es válido.")));
+    }
+
+    /**
+     * Si el evento registrado es de tipo MAINTENANCE, actualiza la fecha de último mantenimiento
+     * de la máquina con la fecha del evento; así el "próximo mantenimiento" se recalcula solo
+     * (el operador no edita la fecha a mano).
+     */
+    private Mono<Void> applyMaintenanceSideEffect(Integer machineId, Integer eventTypeId, MachineEvent saved) {
+        return parameterRepositoryPort.findCodeById(eventTypeId)
+                .flatMap(code -> EVENT_MAINTENANCE.equals(code)
+                        ? machineRepositoryPort.updateLastMaintenanceDate(machineId, saved.eventDate().toLocalDate())
+                        : Mono.<Void>empty());
     }
 
     private Mono<Integer> resolveStatusId(String statusCode) {
