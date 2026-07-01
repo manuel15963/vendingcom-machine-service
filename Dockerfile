@@ -23,4 +23,5 @@ COPY --from=build /app/target/*.jar app.jar
 # El puerto real lo inyecta el entorno con ${PORT}; este EXPOSE es informativo.
 EXPOSE 8084
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# MaxRAMPercentage deja que la JVM use bien la memoria del contenedor (Render free tier ~512 MB).
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]

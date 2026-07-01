@@ -3,6 +3,7 @@ package com.vendingcom.machine_service.infrastructure.adapters.inbound.rest.exce
 import com.vendingcom.machine_service.domain.exception.BusinessRuleException;
 import com.vendingcom.machine_service.domain.exception.DuplicateResourceException;
 import com.vendingcom.machine_service.domain.exception.ResourceNotFoundException;
+import com.vendingcom.machine_service.util.request.RequestContextFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -29,8 +31,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleDataIntegrity(DataIntegrityViolationException exception) {
-        log.warn("Violación de integridad en BD", exception);
+    public Mono<ResponseEntity<ErrorResponse>> handleDataIntegrity(DataIntegrityViolationException exception, ServerWebExchange exchange) {
+        log.warn("[{}] Violación de integridad en BD", reqId(exchange), exception);
         return build(HttpStatus.CONFLICT, "DATA_INTEGRITY_VIOLATION",
                 "El registro viola una restricción de unicidad o integridad.");
     }
@@ -62,20 +64,28 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResponseStatusException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleResponseStatus(ResponseStatusException exception) {
+    public Mono<ResponseEntity<ErrorResponse>> handleResponseStatus(ResponseStatusException exception, ServerWebExchange exchange) {
         HttpStatus status = HttpStatus.resolve(exception.getStatusCode().value());
         if (status == null) {
             status = HttpStatus.INTERNAL_SERVER_ERROR;
         }
         String message = exception.getReason() != null ? exception.getReason() : status.getReasonPhrase();
+        if (status.is5xxServerError()) {
+            log.warn("[{}] {} -> {}", reqId(exchange), status.value(), message);
+        }
         return build(status, "REQUEST_ERROR", message);
     }
 
     @ExceptionHandler(Exception.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleUnexpected(Exception exception) {
-        log.error("Error inesperado no controlado", exception);
+    public Mono<ResponseEntity<ErrorResponse>> handleUnexpected(Exception exception, ServerWebExchange exchange) {
+        log.error("[{}] Error inesperado no controlado", reqId(exchange), exception);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
                 "Ocurrió un error inesperado. Inténtelo nuevamente más tarde.");
+    }
+
+    /** Id de correlación del request para los logs (lo fija RequestContextFilter). */
+    private static String reqId(ServerWebExchange exchange) {
+        return exchange.getAttributeOrDefault(RequestContextFilter.REQUEST_ID_ATTR, "-");
     }
 
     private Mono<ResponseEntity<ErrorResponse>> build(HttpStatus status, String code, String message) {

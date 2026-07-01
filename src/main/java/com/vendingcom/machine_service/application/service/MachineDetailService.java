@@ -15,6 +15,9 @@ import reactor.core.publisher.Mono;
 @Service
 public class MachineDetailService implements MachineDetailUseCase {
 
+    /** Tope defensivo: la ficha muestra a lo sumo los N eventos/documentos más recientes. */
+    private static final int MAX_DETAIL_ITEMS = 100;
+
     private final MachineRepositoryPort machineRepositoryPort;
     private final MachineEventRepositoryPort eventRepositoryPort;
     private final MachineDocumentRepositoryPort documentRepositoryPort;
@@ -35,8 +38,10 @@ public class MachineDetailService implements MachineDetailUseCase {
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("No se encontró la máquina con id: " + machineId)))
                 .flatMap(machine -> Mono.zip(
                         eventRepositoryPort.findByMachineId(machineId)
+                                .take(MAX_DETAIL_ITEMS, true)
                                 .map(MachineEventResponse::fromDomain).collectList(),
                         documentRepositoryPort.findByMachineId(machineId)
+                                .take(MAX_DETAIL_ITEMS, true)
                                 .map(MachineDocumentResponse::fromDomain).collectList()
                 ).map(tuple -> new MachineDetailResponse(
                         MachineResponse.fromDomain(machine),

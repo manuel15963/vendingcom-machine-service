@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -65,6 +66,7 @@ public class MachineService implements MachineUseCase {
         return validateCustomer(request.customerId())
                 .then(validateLocation(request.locationId()))
                 .then(validateMachineTypeIfPresent(request.machineTypeId()))
+                .then(validateMaintenanceDates(request.installationDate(), request.lastMaintenanceDate()))
                 .then(persistNewMachine(request));
     }
 
@@ -116,6 +118,7 @@ public class MachineService implements MachineUseCase {
     @Transactional
     public Mono<Machine> update(Integer machineId, UpdateMachineRequest request) {
         return validateMachineTypeIfPresent(request.machineTypeId())
+                .then(validateMaintenanceDates(request.installationDate(), request.lastMaintenanceDate()))
                 .then(machineRepositoryPort.findById(machineId)
                 .switchIfEmpty(notFound(machineId))
                 .flatMap(existing -> currentActorId()
@@ -283,6 +286,16 @@ public class MachineService implements MachineUseCase {
                         "INVALID_MACHINE_TYPE",
                         "El tipo de máquina indicado no es válido.")))
                 .then();
+    }
+
+    /** Regla cruzada: el último mantenimiento no puede ser anterior a la fecha de instalación. */
+    private Mono<Void> validateMaintenanceDates(LocalDate installationDate, LocalDate lastMaintenanceDate) {
+        if (installationDate != null && lastMaintenanceDate != null && lastMaintenanceDate.isBefore(installationDate)) {
+            return Mono.error(new BusinessRuleException(
+                    "INVALID_MAINTENANCE_DATE",
+                    "El último mantenimiento no puede ser anterior a la fecha de instalación."));
+        }
+        return Mono.empty();
     }
 
     private Mono<Integer> resolveStatusId(String statusCode) {

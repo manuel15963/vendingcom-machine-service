@@ -13,6 +13,15 @@ spring:
     init:
       mode: never
 
+  # Pool R2DBC acotado: Supabase tiene un límite bajo de conexiones y hay varios servicios compartiéndolo.
+  r2dbc:
+    pool:
+      enabled: true
+      initial-size: ${R2DBC_POOL_INITIAL:1}
+      max-size: ${R2DBC_POOL_MAX_SIZE:5}
+      max-idle-time: 15m
+      max-acquire-time: 5s
+
 management:
   health:
     r2dbc:
@@ -27,8 +36,11 @@ machine:
 # Local por defecto; en la nube se pasan CUSTOMER_SERVICE_URL y LOCATION_SERVICE_URL.
 customer-service:
   base-url: ${CUSTOMER_SERVICE_URL:http://localhost:8082}
+  # Timeout por intento; se reintenta 2 veces con backoff ante errores transitorios (cold start de Render).
+  timeout-seconds: ${CUSTOMER_SERVICE_TIMEOUT:10}
 location-service:
   base-url: ${LOCATION_SERVICE_URL:http://localhost:8083}
+  timeout-seconds: ${LOCATION_SERVICE_TIMEOUT:10}
 
 springdoc:
   # En producción se puede desactivar la documentación con SPRINGDOC_ENABLED=false

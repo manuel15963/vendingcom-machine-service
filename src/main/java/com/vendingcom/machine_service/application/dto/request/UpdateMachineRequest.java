@@ -2,6 +2,7 @@ package com.vendingcom.machine_service.application.dto.request;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
@@ -21,8 +22,10 @@ public record UpdateMachineRequest(
         @Size(max = 100, message = "El número de serie no debe superar 100 caracteres")
         String serialNumber,
 
+        @PastOrPresent(message = "La fecha de instalación no puede ser futura")
         LocalDate installationDate,
 
+        @PastOrPresent(message = "El último mantenimiento no puede ser una fecha futura")
         LocalDate lastMaintenanceDate,
 
         Integer machineTypeId,

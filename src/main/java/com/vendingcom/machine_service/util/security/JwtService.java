@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Validación de los tokens JWT emitidos por auth-service.
@@ -32,10 +31,6 @@ public class JwtService {
                 .getPayload();
     }
 
-    public String extractUsername(String token) {
-        return extractClaims(token).getSubject();
-    }
-
     public boolean isTokenValid(String token) {
         try {
             Date expiration = extractClaims(token).getExpiration();
@@ -43,16 +38,5 @@ public class JwtService {
         } catch (Exception exception) {
             return false;
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    public List<String> extractRoles(String token) {
-        Object rolesObject = extractClaims(token).get("roles");
-
-        if (!(rolesObject instanceof List<?> roles)) {
-            return List.of();
-        }
-
-        return roles.stream().map(Object::toString).toList();
     }
 }

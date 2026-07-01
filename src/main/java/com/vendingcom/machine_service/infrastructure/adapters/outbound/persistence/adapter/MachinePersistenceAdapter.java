@@ -158,7 +158,10 @@ public class MachinePersistenceAdapter implements MachineRepositoryPort {
 
     @Override
     public Mono<Void> updateLastMaintenanceDate(Integer machineId, LocalDate maintenanceDate) {
-        return databaseClient.sql("UPDATE machines SET last_maintenance_date = :date WHERE machine_id = :id")
+        // version + 1: si una edición concurrente quedó con versión obsoleta, fallará (optimistic lock)
+        // en vez de pisar silenciosamente esta fecha de mantenimiento.
+        return databaseClient.sql(
+                        "UPDATE machines SET last_maintenance_date = :date, version = version + 1 WHERE machine_id = :id")
                 .bind("date", maintenanceDate)
                 .bind("id", machineId)
                 .fetch().rowsUpdated()

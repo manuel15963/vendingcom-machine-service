@@ -22,6 +22,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -97,6 +98,19 @@ class MachineServiceTest {
         StepVerifier.create(service.create(createRequest()))
                 .expectErrorMatches(e -> e instanceof BusinessRuleException
                         && "LOCATION_NOT_FOUND".equals(((BusinessRuleException) e).getCode()))
+                .verify();
+    }
+
+    @Test
+    void create_ultimoMantenimientoAnteriorAInstalacion_lanzaBusinessRule() {
+        CreateMachineRequest req = new CreateMachineRequest(
+                CUSTOMER_ID, LOCATION_ID, "Modelo X", "Marca Y", "SN-1",
+                LocalDate.of(2026, 6, 10), LocalDate.of(2026, 6, 5),
+                null, null, null, null);
+
+        StepVerifier.create(service.create(req))
+                .expectErrorMatches(e -> e instanceof BusinessRuleException
+                        && "INVALID_MAINTENANCE_DATE".equals(((BusinessRuleException) e).getCode()))
                 .verify();
     }
 
